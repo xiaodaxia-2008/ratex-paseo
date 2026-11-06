@@ -17,7 +17,7 @@
 
 插件的按钮、悬停提示和无障碍标签统一使用英语。当前使用的 Paseo 插件 SDK 未向插件暴露宿主语言设置。
 
-公式消息使用 Paseo 默认的对话字号：网页端 15px，iOS 和 Android 16px。插件 SDK 未提供 **Settings → Appearance** 中的字号设置，修改这些设置后，公式消息仍使用默认字号。
+网页端和桌面端的公式消息跟随 **Settings → Appearance** 中的 **Content size** 和 **Code font size**，修改后很快生效。插件 SDK 未提供这两项设置，插件改为读取 Paseo 保存在客户端的应用设置（`@paseo:app-settings`，已对照 Paseo 0.14–0.15 验证）。iOS 和 Android 的设置存放在插件无法读取的位置，公式消息仍使用 Paseo 默认字号：正文 16px，代码 12px。
 
 ## 环境要求
 

@@ -17,7 +17,7 @@ Render LaTeX formulas directly in Paseo conversations, select and copy their ori
 
 Plugin controls, tooltips, and accessibility labels use English. The installed Paseo plugin SDK does not expose the app's language setting.
 
-Formula messages use Paseo's default chat text sizes: 15px on web and 16px on iOS and Android. The plugin SDK does not expose the text sizes in **Settings → Appearance**, so after you change them, formula messages keep the default sizes.
+On web and desktop, formula messages follow the **Content size** and **Code font size** in **Settings → Appearance**, and update shortly after you change them. The plugin SDK does not expose these settings, so the plugin reads them from the app settings Paseo stores in the client (`@paseo:app-settings`, verified with Paseo 0.14–0.15). iOS and Android keep their settings where plugins cannot read them, so formula messages there use Paseo's default sizes: 16px text and 12px code.
 
 ## Requirements
 

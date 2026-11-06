@@ -5,7 +5,8 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import type { z } from "zod";
 import { codeFileTarget, fileLinkTarget, type FileLocation } from "../shared/file-link";
-import { messageTypography } from "../shared/layout";
+import { messageTypography, type AppearanceTextSizes } from "../shared/layout";
+import { useAppearanceTextSizes } from "./appearance";
 import {
   markdownBlocks,
   type InlineNode,
@@ -27,8 +28,13 @@ type FileLinks = { cwd: string | null; open(location: FileLocation, node: unknow
 /** Cleared inside link text, so code within a link does not become a nested link. */
 const FileLinkContext = createContext<FileLinks | null>(null);
 
-function messageStyles(theme: PluginTheme, compact: boolean, platform: Layout["platform"]) {
-  const type = messageTypography(platform);
+function messageStyles(
+  theme: PluginTheme,
+  compact: boolean,
+  platform: Layout["platform"],
+  sizes: AppearanceTextSizes | null,
+) {
+  const type = messageTypography(platform, sizes);
   const bodySize = type.fontSize;
   const body = {
     color: theme.colors.foreground,
@@ -139,9 +145,10 @@ export function RatexMessage({
 }: PluginTimelineItemProps<RatexMessageData>) {
   const blocks = useMemo(() => markdownBlocks(item.data.text), [item.data.text]);
   const { compact, platform } = layout;
+  const sizes = useAppearanceTextSizes(platform);
   const styles = useMemo(
-    () => messageStyles(theme, compact, platform),
-    [compact, platform, theme],
+    () => messageStyles(theme, compact, platform, sizes),
+    [compact, platform, sizes, theme],
   );
   // Paseo resolves an agent's relative file links against its cwd.
   const cwd = useAgent(agentId, (agent) => agent.cwd);

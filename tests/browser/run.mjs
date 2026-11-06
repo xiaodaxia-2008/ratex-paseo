@@ -116,6 +116,27 @@ try {
   assert.deepEqual(typography, { heading: "24px/31px", paragraph: "15px/21px", code: "12px/21px" });
   console.log(`${mode}: message text uses Paseo's default font sizes`);
 
+  // Paseo saves Settings → Appearance in this window's localStorage without a storage event.
+  const sizedTypography = () => page.evaluate(() => {
+    const nodes = [...document.querySelectorAll("#root *")];
+    const metrics = (prefix) => {
+      const node = nodes.findLast((candidate) => candidate.textContent.startsWith(prefix));
+      const { fontSize, lineHeight } = getComputedStyle(node);
+      return `${fontSize}/${lineHeight}`;
+    };
+    return { heading: metrics("Heading"), paragraph: metrics("Given"), code: metrics("before $$literal") };
+  });
+  await page.evaluate(() => localStorage.setItem("@paseo:app-settings",
+    JSON.stringify({ contentFontSize: 18, codeFontSize: 14 })));
+  await page.waitForFunction(() => [...document.querySelectorAll("#root *")]
+    .findLast((node) => node.textContent.startsWith("Given"))?.style.fontSize === "18px", { timeout: 5000 });
+  assert.deepEqual(await sizedTypography(), { heading: "29px/37px", paragraph: "18px/25px", code: "14px/25px" });
+  await page.evaluate(() => localStorage.removeItem("@paseo:app-settings"));
+  await page.waitForFunction(() => [...document.querySelectorAll("#root *")]
+    .findLast((node) => node.textContent.startsWith("Given"))?.style.fontSize === "15px", { timeout: 5000 });
+  assert.deepEqual(await sizedTypography(), typography);
+  console.log(`${mode}: message text follows Paseo's Appearance text sizes live`);
+
   if (mode === "chrome") {
     await page.waitForFunction(() => [...document.fonts].filter((font) => font.family.startsWith("KaTeX_")).every((font) => font.status === "loaded"));
     const fontCount = await page.evaluate(() => [...document.fonts].filter((font) => font.family.startsWith("KaTeX_")).length);

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { CHAT_FONT_SIZE, formulaDepth, formulaLayout, messageTypography } from "../shared/layout.ts";
+import {
+  APP_SETTINGS_KEY,
+  CHAT_FONT_SIZE,
+  formulaDepth,
+  formulaLayout,
+  messageTypography,
+  storedTextSizes,
+} from "../shared/layout.ts";
 
 test("same em size keeps glyph scale at 1 regardless of formula width", () => {
   const narrow = formulaLayout({ width: 2, height: 3, depth: 1 }, CHAT_FONT_SIZE, 4);
@@ -70,4 +77,31 @@ test("message typography follows Paseo's default Markdown sizes", () => {
     assert.deepEqual(native.heading(1), { fontSize: 26, lineHeight: 33 });
     assert.equal(native.codeSize(native.fontSize), 12);
   }
+});
+
+test("Appearance text sizes drive message typography", () => {
+  const web = messageTypography("web", { content: 18, code: 14 });
+  assert.deepEqual([web.fontSize, web.lineHeight], [18, 25]);
+  assert.deepEqual(web.heading(1), { fontSize: 29, lineHeight: 37 });
+  assert.equal(web.codeSize(web.fontSize), 14);
+  assert.equal(web.codeSize(29), 23);
+  // Native clients cannot read the setting; null keeps Paseo's defaults.
+  assert.equal(messageTypography("ios", null).fontSize, 16);
+});
+
+test("stored app settings resolve text sizes the way Paseo does", () => {
+  const sizes = (settings: unknown) => storedTextSizes(JSON.stringify(settings));
+  assert.equal(APP_SETTINGS_KEY, "@paseo:app-settings");
+  assert.equal(storedTextSizes(null), null);
+  assert.equal(storedTextSizes("{not json"), null);
+  assert.equal(storedTextSizes("[]"), null);
+  assert.deepEqual(sizes({ contentFontSize: 18, codeFontSize: 14 }), { content: 18, code: 14 });
+  // Numeric strings are floored, out-of-range values clamped, invalid values reset to defaults.
+  assert.deepEqual(sizes({ contentFontSize: "17.8", codeFontSize: 40 }), { content: 17, code: 22 });
+  assert.deepEqual(sizes({ contentFontSize: 2, codeFontSize: 1 }), { content: 10, code: 9 });
+  assert.deepEqual(sizes({ contentFontSize: null, codeFontSize: "big" }), { content: 15, code: 12 });
+  // Settings saved before contentFontSize existed: content follows the interface size.
+  assert.deepEqual(sizes({ uiBaseFontSize: 17 }), { content: 17, code: 12 });
+  assert.deepEqual(sizes({ uiFontSize: 20 }), { content: 18, code: 12 });
+  assert.deepEqual(sizes({}), { content: 14, code: 12 });
 });
