@@ -2,13 +2,14 @@ import type { PluginTheme } from "@getpaseo/plugin";
 import { useRpc } from "@getpaseo/plugin/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { PixelRatio, Text, View } from "react-native";
 import { CHAT_FONT_SIZE } from "../shared/layout";
 import { mathSource } from "../shared/math";
 import { renderLatexRpc } from "../shared/ratex";
 import { CODE_FONT_FAMILY } from "./code-font";
 import { FormulaCanvas, isWebPlatform } from "./web";
 import { FormulaSource } from "./formula-source";
+import { FormulaImage } from "./native-image";
 
 export function RatexFormula({
   latex,
@@ -29,21 +30,21 @@ export function RatexFormula({
 }) {
   const renderLatex = useRpc(renderLatexRpc);
   const web = isWebPlatform(platform);
+  const pixelRatio = Math.min(3, Math.max(1, PixelRatio.get()));
   const text = source ?? mathSource(latex, displayMode);
   const [sourceOpen, setSourceOpen] = useState(false);
   const showSource = useCallback(() => setSourceOpen(true), []);
   const closeSource = useCallback(() => setSourceOpen(false), []);
   useEffect(() => setSourceOpen(false), [text]);
   const query = useQuery({
-    queryKey: ["ratex.render", latex, displayMode, colors.foreground],
+    queryKey: ["ratex.render", latex, displayMode, colors.foreground, web ? "canvas" : "png", fontSize, pixelRatio],
     queryFn: () =>
       renderLatex({
         latex,
         displayMode,
         color: colors.foreground,
+        ...(!web ? { bitmap: { fontSize, pixelRatio } } : {}),
       }),
-    // Native never draws the canvas, so it must not pay for the round trip.
-    enabled: web,
     // A given (latex, mode, color) always renders to the same DisplayList.
     staleTime: Infinity,
     gcTime: 30 * 60 * 1000,
@@ -86,18 +87,28 @@ export function RatexFormula({
     [colors.foregroundMuted, fontSize],
   );
 
-  if (sourceOpen && web) {
+  if (sourceOpen) {
+    // A native Text paragraph cannot contain the source panel's Views. Render
+    // selectable inline source there; block formulas use the full copy toolbar.
+    if (!web && !displayMode) return <Text selectable onPress={closeSource} style={styles.fallback}>{text}</Text>;
     return <FormulaSource source={text} colors={colors} displayMode={displayMode} onClose={closeSource} />;
   }
 
-  // Render failures and native platforms show the source as ordinary selectable text,
+  // Pending requests and render failures show ordinary selectable text,
   // so they need no hidden twin.
-  if (query.isError || !result || !result.ok || !web) {
+  if (query.isError || !result || !result.ok) {
     return (
       <Text selectable style={styles.fallback}>
         {text}
       </Text>
     );
+  }
+
+  if (!web) {
+    if (!result.image) return <Text selectable style={styles.fallback}>{text}</Text>;
+    const image = <FormulaImage image={result.image} source={text} inline={!displayMode}
+      color={colors.foregroundMuted} fontSize={fontSize} onShowSource={showSource} />;
+    return displayMode ? <View style={styles.wrap}>{image}</View> : image;
   }
 
   if (!displayMode) {

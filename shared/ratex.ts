@@ -93,11 +93,21 @@ export const renderLatexRpc = defineRpc({
     latex: z.string().min(1).max(MAX_LATEX_LENGTH),
     displayMode: z.boolean(),
     color: z.string().optional(),
+    /** Native clients request a bitmap; web keeps the existing DisplayList path. */
+    bitmap: z.object({
+      fontSize: z.number().min(8).max(96),
+      pixelRatio: z.number().min(1).max(3),
+    }).optional(),
   }),
   output: z.discriminatedUnion("ok", [
     z.object({
       ok: z.literal(true),
       displayList: displayListSchema,
+      image: z.object({
+        base64: z.string(),
+        width: z.number().positive(),
+        height: z.number().positive(),
+      }).optional(),
     }),
     z.object({
       ok: z.literal(false),

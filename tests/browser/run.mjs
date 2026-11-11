@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
+import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { renderLatex } from "../../server/render.ts";
@@ -149,7 +150,7 @@ try {
     await page.mouse.up();
     await page.keyboard.down("Control"); await page.keyboard.press("KeyC"); await page.keyboard.up("Control");
     const clipboard = await page.evaluate(() => navigator.clipboard.readText());
-    assert.ok(clipboard.includes(rangeCopy), `clipboard differs from Range: ${JSON.stringify(clipboard)}`);
+    assert.ok(clipboard.replace(/\r\n/g, "\n").includes(rangeCopy), `clipboard differs from Range: ${JSON.stringify(clipboard)}`);
     console.log("chrome: real mouse drag + Ctrl+C + clipboard read passed; 20 embedded fonts loaded without network");
 
     // Paseo forces its UI font on every #root node except [data-pmono]; code keeps its own.
@@ -206,14 +207,17 @@ try {
       assert.ok(copy.y < box.y + 24, "copy button should be in the top toolbar");
       await page.click('[aria-label="Copy formula source"]');
       await page.waitForFunction(() => document.querySelector('[data-testid="formula-source"]').textContent.includes("Copied"), { timeout: 5000 });
-      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), source);
+      assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), source);
       const selectedSource = await page.$eval('[data-testid="formula-source"]', (node) => {
         const range = document.createRange(); range.selectNodeContents(node);
         const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
         return selection.toString();
       });
       assert.equal(selectedSource.trim(), source.trim(), "selection must not duplicate source or include toolbar labels");
-      if (index === 3) await page.screenshot({ path: "/tmp/ratex-formula-source.png" });
+      if (index === 3) {
+        await mkdir(path.join(root, "test-results"), { recursive: true });
+        await page.screenshot({ path: path.join(root, "test-results/formula-source.png") });
+      }
       await page.click('[aria-label="Show formula"]');
       await page.waitForFunction(() => !document.querySelector('[data-testid="formula-source"]'));
       assert.equal(await page.$eval("#root", (node) => node.querySelectorAll("canvas").length), 8);
@@ -248,10 +252,14 @@ try {
     await page.waitForFunction(() => document.getElementById("root").innerText.includes("$\\definitelyNotACommand{x}$"));
     await page.waitForFunction(() => window.pendingQueries() === 0);
     assert.equal(await page.$eval("#root", (node) => node.querySelectorAll("canvas").length), 0);
-    const count = rpcRequests.length;
-    await page.evaluate(() => window.setFixture({ text: "Native $n_{native}$", platform: "ios" }));
-    await page.waitForFunction(() => document.getElementById("root").innerText.includes("$n_{native}$"));
-    assert.equal(rpcRequests.length, count, "native should not request canvas rendering");
+    for (const platform of ["android", "ios"]) {
+      await page.evaluate((platform) => window.setFixture({ text: `Native $n_{${platform}}$`, platform }), platform);
+      await page.waitForFunction(() => document.querySelector('#root img[src^="data:image/png;base64,"]'));
+      assert.ok(rpcRequests.at(-1).bitmap, "native must request a bitmap");
+      assert.equal(await page.$eval("#root", (node) => node.querySelectorAll("canvas").length), 0);
+      await page.click('[aria-label="View formula source"]');
+      await page.waitForFunction((platform) => document.getElementById("root").innerText.includes(`$n_{${platform}}$`), {}, platform);
+    }
 
     await page.evaluate(() => window.resetFixture());
     await page.setViewport({ width: 390, height: 1200 });
@@ -264,7 +272,7 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= 390), true, "compact source box must not overflow");
     await page.click('[aria-label="Show formula"]');
     await page.waitForFunction(() => document.querySelectorAll('canvas').length === 8);
-    console.log("chrome: new-source loading, theme continuity, render failure, native RPC suppression and compact layout passed");
+    console.log("chrome: loading, theme continuity, failure, Android/iOS bitmap requests and compact layout passed (native branches under RN Web)");
   }
   assert.deepEqual(external, [], "fonts must not request a CDN");
   assert.deepEqual(errors, [], "no browser or RPC errors");

@@ -2,6 +2,22 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
+## 移动端适配 Fork
+
+此 Fork 在 `feature/mobile-formulas` 分支增加 Android/iOS 公式 PNG 渲染，无需修改 Paseo。
+上游 npm 包尚不包含这些改动。安装来源：
+
+```bash
+paseo plugin add git:xiaodaxia-2008/ratex-paseo --ref feature/mobile-formulas
+```
+
+已安装 `ratex-formula` 时，切换来源前需先移除原安装，避免同时启用两套公式转换器。本仓库不会自动替换现有插件。
+
+验证命令：`npm test`、`npm run typecheck`、`npm run test:native`、`npm run test:browser`。
+覆盖图片输出、后台打包后的 RPC、组件交互和桌面回归。原生组件测试使用模拟宿主，Android/iOS 真机显示和行内基线仍需验证。
+手机端点击公式查看源码；整段复制不保证包含公式图片的源码。字体未覆盖的字符退回 LaTeX。
+图片缓存限制为 8 MiB，并限制渲染尺寸；无需额外 HTTP 图片服务、原生扩展或外部字体下载。
+
 在 Paseo 对话中渲染 LaTeX 公式，划选时保留原始源码，双击后可在公式原位置查看 TeX 代码。
 
 ## 功能
@@ -13,7 +29,8 @@
 - 支持键盘操作：聚焦公式后，按 **Enter** 或 **Space** 显示源码。
 - 内嵌公式字体和 WASM 二进制，渲染时无需从 CDN 获取资源。
 - 提供 **RaTeX** 侧栏试写面板和 **RaTeX formula** 工作区面板。
-- 加载中、渲染失败，以及原生 iOS/Android 客户端均显示可选择的 TeX 源码。
+- Android/iOS 使用插件后台生成的透明 PNG 显示公式，复用内嵌数学字体。点击查看源码；独立公式支持复制工具栏和横向滚动。再次点击行内源码可切回公式。
+- 加载中或渲染失败时显示可选择的 TeX 源码。
 
 插件的按钮、悬停提示和无障碍标签统一使用英语。当前使用的 Paseo 插件 SDK 未向插件暴露宿主语言设置。
 
@@ -24,7 +41,7 @@
 | 组件 | 要求 |
 | --- | --- |
 | Paseo | 插件声明兼容 `>=0.13.0`，不设上限（含测试版），开发使用的 SDK 为 `0.13.2`。Paseo 0.8 至 0.12 请安装 `ratex-math-render@0.1.6` |
-| 客户端 | 网页端支持公式渲染和双击交互；原生客户端显示源码 |
+| 客户端 | 桌面/网页使用 Canvas；Android/iOS 使用 PNG，点击查看源码 |
 | 开发环境 | 建议 Node.js 22.14+；已在 Node.js 22.21.1、npm 11.10.1 下验证 |
 | 安装环境 | daemon 所在机器可运行 Node.js 和 npm；Paseo 版本需要支持 npm 插件来源 |
 

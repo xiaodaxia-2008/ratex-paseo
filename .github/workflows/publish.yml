@@ -46,6 +46,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:native
       - run: npm run render:launch
       - run: npm run check:package
 

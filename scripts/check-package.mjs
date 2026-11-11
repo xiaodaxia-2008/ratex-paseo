@@ -7,11 +7,13 @@ const output = execFileSync(npm, ["pack", "--dry-run", "--json"], {
   shell: process.platform === "win32",
 });
 // Lifecycle scripts may print progress before npm's JSON result.
-const [pack] = JSON.parse(output.slice(output.indexOf("[\n")));
+const packed = JSON.parse(output.slice(output.search(/^[\[{]/m)));
+const [pack] = Array.isArray(packed) ? packed : Object.values(packed);
 const paths = new Set(pack.files.map(({ path }) => path));
 for (const path of [
   "index.client.tsx", "index.server.ts", "paseo-plugin.json",
   "server/vendor/ratex-wasm-bytes.ts", "client/vendor/fonts.ts",
+  "server/vendor/fonts.ts",
   "scripts/prepare-plugin.mjs", "scripts/embed-wasm.mjs", "scripts/embed-fonts.mjs",
   "LICENSE", "client/vendor/FONT-LICENSE.txt", "README.md", "README.zh-CN.md",
   "node_modules/ratex-wasm/pkg/ratex_wasm.js",
