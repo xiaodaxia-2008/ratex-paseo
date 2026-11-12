@@ -25,6 +25,7 @@ for (const file of [
   "server/vendor/ratex-wasm-bytes.ts",
   "client/vendor/fonts.ts",
   "server/vendor/fonts.ts",
+  "server/vendor/cjk-font.ts",
   "node_modules/ratex-wasm/pkg/ratex_wasm.js",
   "node_modules/ratex-wasm/dist/renderer.js",
 ]) {

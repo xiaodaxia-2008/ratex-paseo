@@ -28,6 +28,8 @@ playwright-report/
 /server/vendor/ratex-wasm-bytes.ts
 /client/vendor/fonts.ts
 /server/vendor/fonts.ts
+/server/vendor/cjk-font.ts
+/temp/
 
 # Local agent and editor state
 /.agents/

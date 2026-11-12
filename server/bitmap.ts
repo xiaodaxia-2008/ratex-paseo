@@ -7,6 +7,7 @@ import { renderToCanvas } from "../node_modules/ratex-wasm/dist/renderer.js";
 import { formulaDepth, formulaLayout } from "../shared/layout.ts";
 import type { DisplayList } from "../shared/ratex.ts";
 import { FONT_WOFF_GZIP_BASE64 } from "./vendor/fonts.ts";
+import { CJK_WOFF_BASE64 } from "./vendor/cjk-font.ts";
 
 const fonts = new Map<string, opentype.Font>();
 let fontBytes: Record<string, string> | undefined;
@@ -15,13 +16,13 @@ let cacheBytes = 0;
 const CACHE_BYTES = 8 * 1024 * 1024;
 
 function resolveFont(css: string) {
-  const match = /([\d.]+)px\s+(KaTeX_\w+)/.exec(css);
+  const match = /([\d.]+)px\s+(KaTeX_\w+|sans-serif)/.exec(css);
   if (!match) throw new Error(`Unsupported bitmap font: ${css}`);
   const key = `${match[2]}|${/\bbold\b/.test(css) ? "bold" : "normal"}|${/\bitalic\b/.test(css) ? "italic" : "normal"}`;
   let font = fonts.get(key);
   if (!font) {
     fontBytes ??= JSON.parse(gunzipSync(Buffer.from(FONT_WOFF_GZIP_BASE64, "base64")).toString());
-    const encoded = fontBytes![key];
+    const encoded = match[2] === "sans-serif" ? CJK_WOFF_BASE64 : fontBytes![key];
     if (!encoded) throw new Error(`Missing bitmap font: ${key}`);
     const bytes = Uint8Array.from(Buffer.from(encoded, "base64"));
     font = opentype.parse(bytes.buffer);
@@ -61,9 +62,14 @@ export async function renderBitmap(list: DisplayList, fontSize: number, pixelRat
     },
     get(target, property) {
       if (property === "fillText") return (text: string, x: number, y: number) => {
-        const { font, size } = resolveFont(fontCss);
+        let { font, size } = resolveFont(fontCss);
+        // Some CJK punctuation is tagged Main-Regular by the layout engine.
+        // Use the same CJK fallback for missing glyphs in any math face.
         if ([...text].some((character) => font.charToGlyphIndex(character) === 0)) {
-          throw new Error("Formula contains a glyph missing from the bundled fonts");
+          font = resolveFont(`${size}px sans-serif`).font;
+        }
+        if ([...text].some((character) => font.charToGlyphIndex(character) === 0)) {
+          throw new Error(`Formula contains a glyph missing from the bundled fonts: ${text}`);
         }
         const path = font.getPath(text, x, y, size);
         target.beginPath();

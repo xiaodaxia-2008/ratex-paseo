@@ -17,6 +17,8 @@ paseo plugin add git:xiaodaxia-2008/ratex-paseo --ref feature/mobile-formulas
 覆盖图片输出、后台打包后的 RPC、组件交互和桌面回归。原生组件测试使用模拟宿主，Android/iOS 真机显示和行内基线仍需验证。
 手机端点击公式查看源码；整段复制不保证包含公式图片的源码。字体未覆盖的字符退回 LaTeX。
 图片缓存限制为 8 MiB，并限制渲染尺寸；无需额外 HTTP 图片服务、原生扩展或外部字体下载。
+中文公式（例如 `\text{状态}`）使用内嵌的 Noto Sans SC 字体回退，覆盖常用简繁中文和标点。
+未覆盖的生僻字及 emoji 仍退回源码。字体会增加下载和后台包体积，详见[字体来源与限制](assets/fonts/README.md)。
 
 在 Paseo 对话中渲染 LaTeX 公式，划选时保留原始源码，双击后可在公式原位置查看 TeX 代码。
 

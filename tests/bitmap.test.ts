@@ -21,7 +21,9 @@ async function render(latex: string, color = "#eeeeee", displayMode = true, pixe
 test("native rendering produces transparent PNGs for fractions, roots, integrals and matrices", async () => {
   await mkdir(new URL("../test-results/", import.meta.url), { recursive: true });
   const fixtures = [DEFAULT_LATEX, "\\int_0^\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}",
-    "\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}", "\\mathbb{R} \\neq \\mathcal{F} + \\mathbf{x}"];
+    "\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}", "\\mathbb{R} \\neq \\mathcal{F} + \\mathbf{x}",
+    "\\text{状态}=(x,a),\\qquad \\text{控制}=j",
+    "\\text{狀態與控制：速度、加速度} = \\frac{\\Delta x}{\\Delta t}"];
   for (const [index, latex] of fixtures.entries()) {
     const { png, bytes } = await render(latex);
     let transparent = 0, painted = 0;
@@ -65,4 +67,9 @@ test("web requests still return only drawing instructions, native bitmaps are ca
   const first = await render("x");
   const second = await render("x");
   assert.equal(first.result.image, second.result.image);
+});
+
+test("missing emoji glyphs still return a source fallback instead of a tofu bitmap", async () => {
+  const result = await renderLatex({ latex: "\\text{😀}", displayMode: true, bitmap: { fontSize: 20, pixelRatio: 2 } });
+  assert.equal(result.ok, false);
 });

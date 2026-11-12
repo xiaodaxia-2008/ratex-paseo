@@ -44,7 +44,7 @@ const runtimeRequire = (name) => {
 new Function("require", "exports", "module", backend.outputFiles[0].text)(runtimeRequire, module.exports, module);
 let contract, handler;
 module.exports.default({ handle(rpc, callback) { contract = rpc; handler = callback; } });
-const input = contract.input.parse({ latex: "\\frac{1}{2}", displayMode: true, bitmap: { fontSize: 20, pixelRatio: 2 } });
+const input = contract.input.parse({ latex: "\\text{状态}=(x,a),\\qquad \\text{控制}=j", displayMode: true, bitmap: { fontSize: 20, pixelRatio: 2 } });
 const result = contract.output.parse(await handler(input));
 assert.ok(result.ok && result.image?.base64.startsWith("iVBOR"));
 console.log("Daemon bundle harness: bundled renderer, embedded fonts, RPC schemas and PNG output passed.");

@@ -19,6 +19,9 @@ cover bitmap output, RPC bundle execution, component interactions and desktop re
 The native component harness uses a mocked host; Android/iOS device rendering and inline baseline alignment still require device verification.
 Mobile source is available by tapping a formula; copying an entire native paragraph does not promise to include image formulas.
 Unsupported font glyphs fall back to selectable LaTeX. Bitmaps are cached with an 8 MiB budget and reject excessive dimensions.
+Chinese text in formulas (including `\text{状态}`) uses an embedded Noto Sans SC fallback,
+including common traditional Chinese and punctuation. The bundled font increases download
+and daemon-bundle size; see [font provenance and limits](assets/fonts/README.md).
 
 Render LaTeX formulas directly in Paseo conversations, select and copy their original source, and double-click a formula to inspect its TeX in place.
 
