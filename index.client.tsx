@@ -1,6 +1,7 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
 import { FormulaPanel, FormulaSurface } from "./client/formula";
 import { RatexMessage } from "./client/message";
+import { MarkdownFilePanel } from "./client/markdown-file";
 import type { z } from "zod";
 import { hasCompleteMath } from "./shared/math";
 import { ratexMessageSchema } from "./shared/ratex";
@@ -22,6 +23,13 @@ function transformMath({ item }: { item: { text: string } }) {
 }
 
 export default function contribute(client: PluginClientContext) {
+  client.addFilePanel({
+    id: "markdown-math",
+    title: "Markdown + RaTeX",
+    icon: "FileText",
+    files: { extensions: ["md", "markdown", "mdown", "mkd"] },
+    Component: MarkdownFilePanel,
+  });
   client.addTimelineTransformer({
     id: "ratex-assistant-math",
     query: { itemType: "assistant_message" },

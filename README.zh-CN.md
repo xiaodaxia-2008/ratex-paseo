@@ -4,6 +4,11 @@
 
 ## 移动端适配 Fork
 
+Markdown 文件可在文件标签的 **Open with…（打开方式）** 中选择 **Markdown + RaTeX**。
+新增的只读预览支持 `.md`、`.markdown`、`.mdown`、`.mkd`，跟随磁盘更新，复用聊天公式渲染器。
+也可在首次打开的面板选择框中选择并记住该设备的默认方式；Paseo 内置预览保持原样。
+此预览使用插件已有的 Markdown 子集，图片显示为文字标签，暂不渲染 Mermaid。
+
 此 Fork 在 `feature/mobile-formulas` 分支增加 Android/iOS 公式 PNG 渲染，无需修改 Paseo。
 上游 npm 包尚不包含这些改动。安装来源：
 

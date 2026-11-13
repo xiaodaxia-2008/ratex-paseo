@@ -143,13 +143,6 @@ export function RatexMessage({
   theme,
   layout,
 }: PluginTimelineItemProps<RatexMessageData>) {
-  const blocks = useMemo(() => markdownBlocks(item.data.text), [item.data.text]);
-  const { compact, platform } = layout;
-  const sizes = useAppearanceTextSizes(platform);
-  const styles = useMemo(
-    () => messageStyles(theme, compact, platform, sizes),
-    [compact, platform, sizes, theme],
-  );
   // Paseo resolves an agent's relative file links against its cwd.
   const cwd = useAgent(agentId, (agent) => agent.cwd);
   const toast = useToast();
@@ -167,6 +160,25 @@ export function RatexMessage({
 
   return (
     <FileLinkContext.Provider value={fileLinks}>
+      <RatexMarkdown text={item.data.text} theme={theme} layout={layout} />
+    </FileLinkContext.Provider>
+  );
+}
+
+/** Shared by chat messages and the read-only Markdown file preview. */
+export function RatexMarkdown({ text, theme, layout }: {
+  text: string;
+  theme: PluginTheme;
+  layout: Layout;
+}) {
+  const blocks = useMemo(() => markdownBlocks(text), [text]);
+  const { compact, platform } = layout;
+  const sizes = useAppearanceTextSizes(platform);
+  const styles = useMemo(
+    () => messageStyles(theme, compact, platform, sizes),
+    [compact, platform, sizes, theme],
+  );
+  return (
       <View style={styles.column}>
         {blocks.map((block, index) => (
           <MarkdownBlockView
@@ -178,7 +190,6 @@ export function RatexMessage({
           />
         ))}
       </View>
-    </FileLinkContext.Provider>
   );
 }
 

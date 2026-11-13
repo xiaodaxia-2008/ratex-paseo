@@ -19,8 +19,11 @@ await build({
         export const Text = "Text", View = "View", Image = "Image", Pressable = "Pressable", ScrollView = "ScrollView";
         export const PixelRatio = {get: () => 3}; export const Platform = {OS: "android"};
         export const useWindowDimensions = () => ({width: 390, height: 844});`
-        : path.endsWith("/client/ui") ? `export const copyText = async (value) => { globalThis.copied = value; };`
-        : path.endsWith("/client") ? `export const useRpc = () => globalThis.nativeRpc;`
+        : path.endsWith("/client/ui") ? `export const copyText = async (value) => { globalThis.copied = value; };
+          export const Loading = "Loading"; export const useToast = () => ({error() {}});`
+        : path.endsWith("/client") ? `export const useRpc = () => globalThis.nativeRpc;
+          export const useFileText = () => globalThis.fileContent;
+          export const useAgent = () => null; export const openExternalUrl = async () => {};`
         : `export const defineRpc = (contract) => contract;`,
     }));
   } }],

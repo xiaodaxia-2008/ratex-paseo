@@ -3,6 +3,7 @@ import React from "react";
 import { act, create } from "react-test-renderer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RatexFormula } from "../../client/formula-view.tsx";
+import { MarkdownFilePanel } from "../../client/markdown-file.tsx";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const colors = { foreground: "#eee", foregroundMuted: "#aaa", surface2: "#222", border: "#444" };
@@ -51,3 +52,25 @@ for (const platform of ["android", "ios"]) {
   }
 }
 console.log("Native component harness: Android/iOS inline/block images, source/copy/restore, decode failure passed (no device).");
+
+const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+let preview;
+const props = { file: { path: "/docs/design.md" }, theme: { colors }, layout: { platform: "android", compact: true } };
+const mount = () => <QueryClientProvider client={client}><MarkdownFilePanel {...props} /></QueryClientProvider>;
+globalThis.fileContent = { status: "loading" };
+await act(async () => { preview = create(mount()); });
+assert.equal(preview.root.findAllByType("Loading").length, 1);
+globalThis.fileContent = { status: "ready", text: "# Design\n\n\\[\\text{状态}=(x,a)\\]\n\n```tex\n$x$\n```" };
+await act(async () => { preview.update(mount()); });
+await act(async () => { await new Promise((resolve) => setTimeout(resolve, 25)); });
+assert.equal(preview.root.findAllByType("Image").length, 1);
+assert.ok(calls.some((call) => call.latex.includes("状态")));
+globalThis.fileContent = { status: "ready", text: "Changed file without formulas" };
+await act(async () => { preview.update(mount()); });
+assert.equal(preview.root.findAllByType("Image").length, 0);
+globalThis.fileContent = { status: "error", error: new Error("File deleted") };
+await act(async () => { preview.update(mount()); });
+assert.equal(preview.root.findByType("Text").props.children, "File deleted");
+await act(async () => preview.unmount());
+client.clear();
+console.log("Markdown file preview harness: loading, Chinese math, disk-update state and read error passed.");

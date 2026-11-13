@@ -4,6 +4,13 @@
 
 ## Mobile adaptation fork
 
+Markdown files can be opened with **Markdown + RaTeX** from the file tab's
+**Open with…** menu. This read-only preview supports `.md`, `.markdown`, `.mdown`
+and `.mkd`, follows host file changes, and uses the same formula renderer as chat.
+Choose it in the initial panel picker or remember the association on each device.
+The built-in Paseo Markdown preview is unchanged. This lightweight preview uses
+the plugin's Markdown subset; images remain labels and Mermaid is not rendered.
+
 This fork adds daemon-rendered PNG formulas for Android/iOS without modifying Paseo.
 The implementation is on `feature/mobile-formulas`. The upstream npm package does not include these changes.
 
